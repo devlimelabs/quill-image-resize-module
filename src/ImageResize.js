@@ -1,4 +1,5 @@
 import defaultsDeep from 'lodash/defaultsDeep';
+import Quill from 'quill';
 
 import DefaultOptions from './DefaultOptions';
 import { DisplaySize } from './modules/DisplaySize';
@@ -14,192 +15,257 @@ const knownModules = { DisplaySize, Toolbar, Resize };
  */
 export default class ImageResize {
 
-    constructor(quill, options = {}) {
-        // save the quill reference and options
-        this.quill = quill;
+	constructor(quill, options = {}) {
+		// save the quill reference and options
+		this.quill = quill;
 
-        // Apply the options to our defaults, and stash them for later
-        // defaultsDeep doesn't do arrays as you'd expect, so we'll need to apply the classes array from options separately
-        let moduleClasses = false;
-        if (options.modules) {
-            moduleClasses = options.modules.slice();
-        }
+		// Apply the options to our defaults, and stash them for later
+		// defaultsDeep doesn't do arrays as you'd expect, so we'll need to apply the classes array from options separately
+		let moduleClasses = false;
+		if (options.modules) {
+			moduleClasses = options.modules.slice();
+		}
 
-        // Apply options to default options
-        this.options = defaultsDeep({}, options, DefaultOptions);
+		// Apply options to default options
+		this.options = defaultsDeep({}, options, DefaultOptions);
 
-        // (see above about moduleClasses)
-        if (moduleClasses !== false) {
-            this.options.modules = moduleClasses;
-        }
+		// (see above about moduleClasses)
+		if (moduleClasses !== false) {
+			this.options.modules = moduleClasses;
+		}
 
-        // disable native image resizing on firefox
-        document.execCommand('enableObjectResizing', false, 'false');
+		// disable native image resizing on firefox
+		document.execCommand('enableObjectResizing', false, 'false');
 
-        // respond to clicks inside the editor
-        this.quill.root.addEventListener('click', this.handleClick, false);
+		// respond to clicks inside the editor
+		this.quill.root.addEventListener('click', this.handleClick, false);
 		this.quill.root.addEventListener('touchend', this.handleClick, false);
+		this.quill.root.addEventListener('mscontrolselect', this.handleClick, false); //IE 11 support
+		this.quill.root.addEventListener('scroll', this.handleScroll, false);
 
-        this.quill.root.parentNode.style.position = this.quill.root.parentNode.style.position || 'relative';
+		this.quill.root.parentNode.style.position = this.quill.root.parentNode.style.position || 'relative';
 
-        // setup modules
-        this.moduleClasses = this.options.modules;
+		// setup modules
+		this.moduleClasses = this.options.modules;
 
-        this.modules = [];
-    }
+		this.modules = [];
+	}
 
-    initializeModules = () => {
-        this.removeModules();
+	initializeModules = () => {
+		this.removeModules();
 
-        this.modules = this.moduleClasses.map(
-            ModuleClass => new (knownModules[ModuleClass] || ModuleClass)(this),
-        );
+		this.modules = this.moduleClasses.map(
+			ModuleClass => new (knownModules[ModuleClass] || ModuleClass)(this),
+		);
 
-        this.modules.forEach(
-            (module) => {
-                module.onCreate();
-            },
-        );
+		this.modules.forEach(
+			(module) => {
+				module.onCreate();
+			},
+		);
 
-        this.onUpdate();
-    };
+		this.onUpdate();
+	};
 
-    onUpdate = () => {
-        this.repositionElements();
-        this.modules.forEach(
-            (module) => {
-                module.onUpdate();
-            },
-        );
-    };
+	onUpdate = () => {
+		this.repositionElements();
+		this.modules.forEach(
+			(module) => {
+				module.onUpdate();
+			},
+		);
+	};
 
-    removeModules = () => {
-        this.modules.forEach(
-            (module) => {
-                module.onDestroy();
-            },
-        );
+	removeModules = () => {
+		this.modules.forEach(
+			(module) => {
+				module.onDestroy();
+			},
+		);
 
-        this.modules = [];
-    };
+		this.modules = [];
+	};
 
-    handleClick = (evt) => {
-		console.log('handleclick', evt);
-        if (evt.target && evt.target.tagName && evt.target.tagName.toUpperCase() === 'IMG') {
-            if (this.img === evt.target) {
-                // we are already focused on this image
-                return;
-            }
-            if (this.img) {
-                // we were just focused on another image
-                this.hide();
-            }
-            // clicked on an image inside the editor
-            this.show(evt.target);
-        } else if (this.img) {
-            // clicked on a non image
-            this.hide();
-        }
-    };
+	handleClick = (evt) => {
+		if (evt.target && evt.target.tagName && evt.target.tagName.toUpperCase() === 'IMG') {
+			if (this.img === evt.target) {
+				// we are already focused on this image
+				return;
+			}
+			if (this.img) {
+				// we were just focused on another image
+				this.hide();
+			}
+			// clicked on an image inside the editor
+			this.show(evt.target);
+			evt.preventDefault(); //Prevent IE 11 drag handles appearing
+		} else if (this.img) {
+			// clicked on a non image
+			this.hide();
+		}
+	};
 
-    show = (img) => {
-        // keep track of this img element
-        this.img = img;
+	handleScroll = (evt) => {
+		//Hide the overlay when the editor is scrolled,
+		//otherwise image is no longer correctly aligned with overlay
+		this.hide();
+	};
 
-        this.showOverlay();
+	show = (img) => {
+		// keep track of this img element
+		this.img = img;
 
-        this.initializeModules();
-    };
+		this.showOverlay();
 
-    showOverlay = () => {
-		console.log('showOverlay');
-        if (this.overlay) {
-            this.hideOverlay();
-        }
+		this.initializeModules();
+	};
 
-        this.quill.setSelection(null);
+	showOverlay = () => {
+		if (this.overlay) {
+			this.hideOverlay();
+		}
 
-        // prevent spurious text selection
-        this.setUserSelect('none');
+		this.quill.setSelection(null);
 
-        // listen for the image being deleted or moved
-        document.addEventListener('keyup', this.checkImage, true);
-        this.quill.root.addEventListener('input', this.checkImage, true);
+		// prevent spurious text selection
+		this.setUserSelect('none');
 
-        // Create and add the overlay
-        this.overlay = document.createElement('div');
-        Object.assign(this.overlay.style, this.options.overlayStyles);
+		// listen for the image being deleted or moved
+		document.addEventListener('keyup', this.checkImage, true);
+		this.quill.root.addEventListener('input', this.checkImage, true);
 
-        this.quill.root.parentNode.appendChild(this.overlay);
+		// Create and add the overlay
+		this.overlay = document.createElement('div');
+		Object.assign(this.overlay.style, this.options.overlayStyles);
 
-        this.repositionElements();
-    };
+		this.quill.root.parentNode.appendChild(this.overlay);
 
-    hideOverlay = () => {
-        if (!this.overlay) {
-            return;
-        }
+		this.repositionElements();
+	};
 
-        // Remove the overlay
-        this.quill.root.parentNode.removeChild(this.overlay);
-        this.overlay = undefined;
+	hideOverlay = () => {
+		if (!this.overlay) {
+			return;
+		}
 
-        // stop listening for image deletion or movement
-        document.removeEventListener('keyup', this.checkImage);
-        this.quill.root.removeEventListener('input', this.checkImage);
+		// Remove the overlay
+		this.quill.root.parentNode.removeChild(this.overlay);
+		this.overlay = undefined;
 
-        // reset user-select
-        this.setUserSelect('');
-    };
+		// stop listening for image deletion or movement
+		document.removeEventListener('keyup', this.checkImage);
+		this.quill.root.removeEventListener('input', this.checkImage);
 
-    repositionElements = () => {
-        if (!this.overlay || !this.img) {
-            return;
-        }
+		// reset user-select
+		this.setUserSelect('');
+	};
 
-        // position the overlay over the image
-        const parent = this.quill.root.parentNode;
-        const imgRect = this.img.getBoundingClientRect();
-        const containerRect = parent.getBoundingClientRect();
+	repositionElements = () => {
+		if (!this.overlay || !this.img) {
+			return;
+		}
 
-        Object.assign(this.overlay.style, {
-            left: `${imgRect.left - containerRect.left - 1 + parent.scrollLeft}px`,
-            top: `${imgRect.top - containerRect.top + parent.scrollTop}px`,
-            width: `${imgRect.width}px`,
-            height: `${imgRect.height}px`,
-        });
-    };
+		// position the overlay over the image
+		const parent = this.quill.root.parentNode;
+		const imgRect = this.img.getBoundingClientRect();
+		const containerRect = parent.getBoundingClientRect();
 
-    hide = () => {
-        this.hideOverlay();
-        this.removeModules();
-        this.img = undefined;
-    };
+		Object.assign(this.overlay.style, {
+			left: `${imgRect.left - containerRect.left - 1 + parent.scrollLeft}px`,
+			top: `${imgRect.top - containerRect.top + parent.scrollTop}px`,
+			width: `${imgRect.width}px`,
+			height: `${imgRect.height}px`,
+		});
+	};
 
-    setUserSelect = (value) => {
-        [
-            'userSelect',
-            'mozUserSelect',
-            'webkitUserSelect',
-            'msUserSelect',
-        ].forEach((prop) => {
-            // set on contenteditable element and <html>
-            this.quill.root.style[prop] = value;
-            document.documentElement.style[prop] = value;
-        });
-    };
+	hide = () => {
+		this.hideOverlay();
+		this.removeModules();
+		this.img = undefined;
+	};
 
-    checkImage = (evt) => {
-		console.log('checkImage', evt);
-        if (this.img) {
-            if (evt.keyCode == 46 || evt.keyCode == 8) {
-                window.Quill.find(this.img).deleteAt(0);
-            }
-            this.hide();
-        }
-    };
+	setUserSelect = (value) => {
+		[
+			'userSelect',
+			'mozUserSelect',
+			'webkitUserSelect',
+			'msUserSelect',
+		].forEach((prop) => {
+			// set on contenteditable element and <html>
+			this.quill.root.style[prop] = value;
+			document.documentElement.style[prop] = value;
+		});
+	};
+
+	checkImage = (evt) => {
+		if (this.img) {
+			if (evt.keyCode == 46 || evt.keyCode == 8) {
+				(window.Quill || Quill).find(this.img).deleteAt(0);
+			}
+			this.hide();
+		}
+	};
 }
 
 if (window.Quill) {
-    window.Quill.register('modules/imageResize', ImageResize);
+
+	//BEGIN allow image alignment styles
+	const ImageFormatAttributesList = [
+		'alt',
+		'height',
+		'width',
+		'style',
+	];
+
+	var BaseImageFormat = window.Quill.import('formats/image');
+	class ImageFormat extends BaseImageFormat {
+		static formats(domNode) {
+			return ImageFormatAttributesList.reduce(function (formats, attribute) {
+				if (domNode.hasAttribute(attribute)) {
+					formats[attribute] = domNode.getAttribute(attribute);
+				}
+				return formats;
+			}, {});
+		}
+		format(name, value) {
+			if (ImageFormatAttributesList.indexOf(name) > -1) {
+				if (value) {
+					this.domNode.setAttribute(name, value);
+				} else {
+					this.domNode.removeAttribute(name);
+				}
+			} else {
+				super.format(name, value);
+			}
+		}
+	}
+
+	window.Quill.register(ImageFormat, true);
+	//END allow image alignment styles
+
+
+	//Add support for IE 11
+	if (typeof Object.assign != 'function') {
+		Object.assign = function (target) {
+			'use strict';
+			if (target == null) {
+				throw new TypeError('Cannot convert undefined or null to object');
+			}
+
+			target = Object(target);
+			for (var index = 1; index < arguments.length; index++) {
+				var source = arguments[index];
+				if (source != null) {
+					for (var key in source) {
+						if (Object.prototype.hasOwnProperty.call(source, key)) {
+							target[key] = source[key];
+						}
+					}
+				}
+			}
+			return target;
+		};
+	}
+
+	window.Quill.register('modules/imageResize', ImageResize);
 }

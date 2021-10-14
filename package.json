@@ -1,6 +1,6 @@
 {
   "name": "quill-image-resize-module",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A module for Quill rich text editor to allow images to be resized.",
   "main": "image-resize.min.js",
   "scripts": {
@@ -21,11 +21,15 @@
     "resize",
     "sizer"
   ],
-  "author": "@devlime",
+  "author": "@kensnyder",
   "contributors": [
+	  {
+		  "name": "devlimelabs",
+		  "url": "https://github.com/devlimelabs"
+	  },
     {
       "name": "Wikia",
-      "url": "https://github.com/devlime"
+      "url": "https://github.com/Wikia"
     }
   ],
   "license": "MIT",

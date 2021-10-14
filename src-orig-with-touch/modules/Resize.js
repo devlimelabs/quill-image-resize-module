@@ -48,7 +48,7 @@ export class Resize extends BaseModule {
 
         // listen for mousedown on each box
         box.addEventListener('mousedown', this.handleMousedown, false);
-		box.addEventListener('touchstart', this.handleMousedown, false);
+		box.addEventListener('touchstart', this.handleTouchStart, false);
         // add drag handle to document
         this.overlay.appendChild(box);
         // keep track of drag handle
@@ -56,67 +56,74 @@ export class Resize extends BaseModule {
     };
 
     handleMousedown = (evt) => {
-		const isTouchEvent = (evt.type === 'touchstart');
         // note which box
         this.dragBox = evt.target;
-
         // note starting mousedown position
-		// Set clientX based on event type
-
-		if (isTouchEvent) {
-			this.dragStartX = evt.changedTouches[0].clientX;
-		} else {
-			this.dragStartX = evt.clientX;
-		}
-
+        this.dragStartX = evt.clientX;
         // store the width before the drag
         this.preDragWidth = this.img.width || this.img.naturalWidth;
         // set the proper cursor everywhere
         this.setCursor(this.dragBox.style.cursor);
-
-		if (isTouchEvent) {
-			// listen for movement and touchend
-			document.addEventListener('touchmove', this.handleDrag, false);
-			document.addEventListener('touchend', this.handleMouseup, false);
-		} else {
-			// listen for movement and mouseup
-			document.addEventListener('mousemove', this.handleDrag, false);
-			document.addEventListener('mouseup', this.handleMouseup, false);
-		}
+        // listen for movement and mouseup
+        document.addEventListener('mousemove', this.handleDrag, false);
+        document.addEventListener('mouseup', this.handleMouseup, false);
     };
 
-    handleMouseup = (evt) => {
-		const isTouchEvent = (evt.type === 'touchend');
+	handleTouchStart = (evt) => {
+        // note which box
+        this.dragBox = evt.target;
+        // note starting mousedown position
+        this.dragStartX = evt.changedTouches[0].clientX;
+        // store the width before the drag
+        this.preDragWidth = this.img.width || this.img.naturalWidth;
+        // set the proper cursor everywhere
+        this.setCursor(this.dragBox.style.cursor);
+        // listen for movement and touchend
+		document.addEventListener('touchmove', this.handleTouchDrag, false);
+		document.addEventListener('touchend', this.handleTouchEnd, false);
+    };
+
+    handleMouseup = () => {
         // reset cursor everywhere
         this.setCursor('');
-
-
-		if (isTouchEvent) {
-			// stop listening for movement and mouseup
-			document.removeEventListener('touchmove', this.handleDrag);
-			document.removeEventListener('touchend', this.handleMouseup);
-		} else {
-			// stop listening for movement and mouseup
-			document.removeEventListener('mousemove', this.handleDrag);
-        	document.removeEventListener('mouseup', this.handleMouseup);
-		}
+        // stop listening for movement and mouseup
+        document.removeEventListener('mousemove', this.handleDrag);
+        document.removeEventListener('mouseup', this.handleMouseup);
     };
+
+	handleTouchEnd = () => {
+        // reset cursor everywhere
+        this.setCursor('');
+        // stop listening for movement and mouseup
+        document.removeEventListener('touchmove', this.handleTouchDrag);
+        document.removeEventListener('touchend', this.handleTouchEnd);
+    };
+
 
     handleDrag = (evt) => {
         if (!this.img) {
             // image not set yet
             return;
         }
-
-		// Set clientX based on event type
-		let clientX = evt.clientX;
-
-		if (evt.type === 'touchmove') {
-			clientX = evt.changedTouches[0].clientX;
-		}
-
         // update image size
-        const deltaX = clientX - this.dragStartX;
+        const deltaX = evt.clientX - this.dragStartX;
+        if (this.dragBox === this.boxes[0] || this.dragBox === this.boxes[3]) {
+            // left-side resize handler; dragging right shrinks image
+            this.img.width = Math.round(this.preDragWidth - deltaX);
+        } else {
+            // right-side resize handler; dragging right enlarges image
+            this.img.width = Math.round(this.preDragWidth + deltaX);
+        }
+        this.requestUpdate();
+    };
+
+	handleTouchDrag = (evt) => {
+        if (!this.img) {
+            // image not set yet
+            return;
+        }
+        // update image size
+        const deltaX = evt.changedTouches[0].clientX - this.dragStartX;
         if (this.dragBox === this.boxes[0] || this.dragBox === this.boxes[3]) {
             // left-side resize handler; dragging right shrinks image
             this.img.width = Math.round(this.preDragWidth - deltaX);

@@ -1,19 +1,12 @@
-import Quill from "quill";
 import IconAlignLeft from 'quill/assets/icons/align-left.svg';
 import IconAlignCenter from 'quill/assets/icons/align-center.svg';
 import IconAlignRight from 'quill/assets/icons/align-right.svg';
 import { BaseModule } from './BaseModule';
 
-const Parchment = Quill.imports.parchment;
+const Parchment = window.Quill.imports.parchment;
 const FloatStyle = new Parchment.Attributor.Style('float', 'float');
 const MarginStyle = new Parchment.Attributor.Style('margin', 'margin');
 const DisplayStyle = new Parchment.Attributor.Style('display', 'display');
-
-const offsetAttributor = new Parchment.Attributor.Attribute('nameClass', 'class', {
-	scope: Parchment.Scope.INLINE,
-});
-
-Quill.register(offsetAttributor);
 
 export class Toolbar extends BaseModule {
     onCreate = () => {
@@ -40,8 +33,7 @@ export class Toolbar extends BaseModule {
                 apply: () => {
                     DisplayStyle.add(this.img, 'inline');
                     FloatStyle.add(this.img, 'left');
-					MarginStyle.add(this.img, '0 1em 1em 0');
-					this.img.align = 'left';
+                    MarginStyle.add(this.img, '0 1em 1em 0');
                 },
                 isApplied: () => FloatStyle.value(this.img) == 'left',
             },
@@ -50,8 +42,7 @@ export class Toolbar extends BaseModule {
                 apply: () => {
                     DisplayStyle.add(this.img, 'block');
                     FloatStyle.remove(this.img);
-					MarginStyle.add(this.img, 'auto');
-					this.img.align = 'center';
+                    MarginStyle.add(this.img, 'auto');
                 },
                 isApplied: () => MarginStyle.value(this.img) == 'auto',
             },
@@ -60,8 +51,7 @@ export class Toolbar extends BaseModule {
                 apply: () => {
                     DisplayStyle.add(this.img, 'inline');
                     FloatStyle.add(this.img, 'right');
-					MarginStyle.add(this.img, '0 0 1em 1em');
-					this.img.align = 'right';
+                    MarginStyle.add(this.img, '0 0 1em 1em');
                 },
                 isApplied: () => FloatStyle.value(this.img) == 'right',
             },
@@ -82,7 +72,7 @@ export class Toolbar extends BaseModule {
 					FloatStyle.remove(this.img);
 					MarginStyle.remove(this.img);
 					DisplayStyle.remove(this.img);
-				}else {
+				}				else {
 						// otherwise, select button and apply
 					this._selectButton(button);
 					alignment.apply();
