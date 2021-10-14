@@ -84,6 +84,7 @@ export default class ImageResize {
     };
 
     handleClick = (evt) => {
+		console.log('handleclick', evt);
         if (evt.target && evt.target.tagName && evt.target.tagName.toUpperCase() === 'IMG') {
             if (this.img === evt.target) {
                 // we are already focused on this image
@@ -111,6 +112,7 @@ export default class ImageResize {
     };
 
     showOverlay = () => {
+		console.log('showOverlay');
         if (this.overlay) {
             this.hideOverlay();
         }
@@ -188,6 +190,7 @@ export default class ImageResize {
     };
 
     checkImage = (evt) => {
+		console.log('checkImage', evt);
         if (this.img) {
             if (evt.keyCode == 46 || evt.keyCode == 8) {
                 window.Quill.find(this.img).deleteAt(0);

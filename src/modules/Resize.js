@@ -35,6 +35,7 @@ export class Resize extends BaseModule {
     };
 
     addBox = (cursor) => {
+		console.log('addbox', cursor);
         // create div element for resize handle
         const box = document.createElement('div');
 
@@ -56,6 +57,7 @@ export class Resize extends BaseModule {
     };
 
     handleMousedown = (evt) => {
+		console.log('handle MouseDown', evt);
         // note which box
         this.dragBox = evt.target;
         // note starting mousedown position
@@ -82,6 +84,7 @@ export class Resize extends BaseModule {
     };
 
     handleDrag = (evt) => {
+		console.log('handle drag', evt);
         if (!this.img) {
             // image not set yet
             return;
