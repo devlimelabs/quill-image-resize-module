@@ -68,9 +68,7 @@ export class Resize extends BaseModule {
         this.setCursor(this.dragBox.style.cursor);
         // listen for movement and mouseup
         document.addEventListener('mousemove', this.handleDrag, false);
-		document.addEventListener('touchmove', this.handleDrag, false);
         document.addEventListener('mouseup', this.handleMouseup, false);
-		document.addEventListener('touchend', this.handleMouseup, false);
     };
 
 	handleTouchStart = (evt) => {
@@ -83,11 +81,9 @@ export class Resize extends BaseModule {
         this.preDragWidth = this.img.width || this.img.naturalWidth;
         // set the proper cursor everywhere
         this.setCursor(this.dragBox.style.cursor);
-        // listen for movement and mouseup
-        document.addEventListener('mousemove', this.handleDrag, false);
+        // listen for movement and touchend
 		document.addEventListener('touchmove', this.handleTouchDrag, false);
-        document.addEventListener('mouseup', this.handleMouseup, false);
-		document.addEventListener('touchend', this.handleMouseup, false);
+		document.addEventListener('touchend', this.handleTouchEnd, false);
     };
 
     handleMouseup = (evt) => {
@@ -96,10 +92,18 @@ export class Resize extends BaseModule {
         this.setCursor('');
         // stop listening for movement and mouseup
         document.removeEventListener('mousemove', this.handleDrag);
-		document.removeEventListener('touchmove', this.handleDrag);
         document.removeEventListener('mouseup', this.handleMouseup);
-		document.removeEventListener('touchend', this.handleMouseup);
     };
+
+	handleTouchEnd = (evt) => {
+		console.log('handleMouseUp', evt)
+        // reset cursor everywhere
+        this.setCursor('');
+        // stop listening for movement and mouseup
+        document.removeEventListener('touchmove', this.handleTouchDrag);
+        document.removeEventListener('touchend', this.handleTouchEnd);
+    };
+
 
     handleDrag = (evt) => {
 		console.log('handle drag', evt);
