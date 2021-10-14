@@ -35,7 +35,6 @@ export class Resize extends BaseModule {
     };
 
     addBox = (cursor) => {
-		console.log('addbox', cursor);
         // create div element for resize handle
         const box = document.createElement('div');
 
@@ -57,7 +56,6 @@ export class Resize extends BaseModule {
     };
 
     handleMousedown = (evt) => {
-		console.log('handle MouseDown', evt);
         // note which box
         this.dragBox = evt.target;
         // note starting mousedown position
@@ -72,7 +70,6 @@ export class Resize extends BaseModule {
     };
 
 	handleTouchStart = (evt) => {
-		console.log('handle touchstart', evt);
         // note which box
         this.dragBox = evt.target;
         // note starting mousedown position
@@ -86,8 +83,7 @@ export class Resize extends BaseModule {
 		document.addEventListener('touchend', this.handleTouchEnd, false);
     };
 
-    handleMouseup = (evt) => {
-		console.log('handleMouseUp', evt)
+    handleMouseup = () => {
         // reset cursor everywhere
         this.setCursor('');
         // stop listening for movement and mouseup
@@ -95,8 +91,7 @@ export class Resize extends BaseModule {
         document.removeEventListener('mouseup', this.handleMouseup);
     };
 
-	handleTouchEnd = (evt) => {
-		console.log('handleMouseUp', evt)
+	handleTouchEnd = () => {
         // reset cursor everywhere
         this.setCursor('');
         // stop listening for movement and mouseup
@@ -106,7 +101,6 @@ export class Resize extends BaseModule {
 
 
     handleDrag = (evt) => {
-		console.log('handle drag', evt);
         if (!this.img) {
             // image not set yet
             return;
@@ -124,7 +118,6 @@ export class Resize extends BaseModule {
     };
 
 	handleTouchDrag = (evt) => {
-		console.log('handle TOUCH drag', evt);
         if (!this.img) {
             // image not set yet
             return;
