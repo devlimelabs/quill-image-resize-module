@@ -1,8 +1,9 @@
 import defaultsDeep from 'lodash/defaultsDeep';
+
 import DefaultOptions from './DefaultOptions';
 import { DisplaySize } from './modules/DisplaySize';
-import { Toolbar } from './modules/Toolbar';
 import { Resize } from './modules/Resize';
+import { Toolbar } from './modules/Toolbar';
 
 const knownModules = { DisplaySize, Toolbar, Resize };
 
@@ -37,6 +38,7 @@ export default class ImageResize {
 
         // respond to clicks inside the editor
         this.quill.root.addEventListener('click', this.handleClick, false);
+		this.quill.root.addEventListener('touchend', this.handleClick, false);
 
         this.quill.root.parentNode.style.position = this.quill.root.parentNode.style.position || 'relative';
 
